@@ -1,11 +1,9 @@
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, Shield, Key, Hash, Type, Braces, Info } from 'lucide-react'
+import { AlertTriangle, Shield, Hash, Type, Braces, Info } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
-import { ChartContainer } from "@/components/ui/chart"
-import type { ChartConfig } from "@/components/ui/chart"
 
 interface SecurityAnalysisProps {
   password: string

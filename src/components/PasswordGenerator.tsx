@@ -58,24 +58,7 @@ function getMathRandom(): number {
 
 // Add more random source implementations
 function getSystemRandom(): number {
-  // Use system-specific entropy sources when available
-  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
-    const array = new Uint32Array(1)
-    window.crypto.getRandomValues(array)
-    return array[0] / (0xffffffff + 1)
-  }
-  // Fallback to Node.js crypto if available
-  if (typeof require !== 'undefined') {
-    try {
-      const crypto = require('crypto')
-      const bytes = crypto.randomBytes(4)
-      const value = bytes.readUInt32LE(0)
-      return value / (0xffffffff + 1)
-    } catch (e) {
-      console.warn('System random source not available, falling back to Web Crypto API')
-      return getSecureRandom()
-    }
-  }
+  // Use Web Crypto API as it's available in both browser and Node.js environments
   return getSecureRandom()
 }
 
