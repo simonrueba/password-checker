@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Copy, RefreshCw, AlertTriangle, Check } from 'lucide-react'
+import { Copy, RefreshCw, AlertTriangle, Check, Star, StarOff, Download, Save, Lightbulb } from 'lucide-react'
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Progress } from "@/components/ui/progress"
@@ -12,6 +12,7 @@ import { Shield, Key, Hash, Type, Braces } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import RandomSourceSelector, { type RandomSource } from './RandomSourceSelector'
 import { useToast } from "@/components/ui/use-toast"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface PasswordGeneratorProps {
   onSelect?: (password: string) => void
@@ -182,6 +183,11 @@ function generatePassword(options: PasswordOptions): string {
   return password
 }
 
+interface SavedConfig {
+  name: string
+  options: PasswordOptions
+}
+
 export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) {
   const { toast } = useToast()
   const [options, setOptions] = useState<PasswordOptions>({
@@ -197,6 +203,17 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
 
   const [password, setPassword] = useState(() => generatePassword(options))
   const [copied, setCopied] = useState(false)
+  const [savedConfigs, setSavedConfigs] = useState<SavedConfig[]>(() => {
+    const saved = localStorage.getItem('savedPasswordConfigs')
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Add effect to regenerate password when options change
+  useEffect(() => {
+    const newPassword = generatePassword(options)
+    setPassword(newPassword)
+    if (onSelect) onSelect(newPassword)
+  }, [options, onSelect])
 
   const handleGenerate = () => {
     const newPassword = generatePassword(options)
@@ -214,73 +231,151 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // Keyboard shortcuts
+  const handleKeyPress = useCallback((event: KeyboardEvent) => {
+    // Ctrl/Cmd + R to regenerate
+    if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+      event.preventDefault()
+      const newPassword = generatePassword(options)
+      setPassword(newPassword)
+      if (onSelect) onSelect(newPassword)
+    }
+    // Ctrl/Cmd + C to copy when focused
+    if ((event.ctrlKey || event.metaKey) && event.key === 'c' && document.activeElement?.id === 'password-input') {
+      event.preventDefault()
+      handleCopy()
+    }
+  }, [options, onSelect])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [handleKeyPress])
+
+  // Save configurations to localStorage
+  useEffect(() => {
+    localStorage.setItem('savedPasswordConfigs', JSON.stringify(savedConfigs))
+  }, [savedConfigs])
+
+  const saveCurrentConfig = () => {
+    const name = prompt('Enter a name for this configuration:')
+    if (!name) return
+
+    setSavedConfigs(prev => [...prev, { name, options }])
+    toast({
+      title: "Configuration Saved",
+      description: `Saved as "${name}"`,
+    })
+  }
+
+  const loadConfig = (config: SavedConfig) => {
+    setOptions(config.options)
+    toast({
+      title: "Configuration Loaded",
+      description: `Loaded "${config.name}"`,
+    })
+  }
+
+  const deleteConfig = (index: number) => {
+    setSavedConfigs(prev => prev.filter((_, i) => i !== index))
+    toast({
+      title: "Configuration Deleted",
+      description: "Configuration removed from favorites",
+      })
+  }
+
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">Password Generator</h3>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <kbd className="px-2 py-1 rounded bg-muted">⌘R</kbd>
+          <span>regenerate</span>
+          <kbd className="px-2 py-1 rounded bg-muted">⌘C</kbd>
+          <span>copy</span>
+        </div>
+      </div>
       {/* Generated Password */}
-      <Card className="overflow-hidden">
-        <div className="border-b bg-muted/50 p-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h3 className="font-semibold tracking-tight">Generated Password</h3>
-              <p className="text-sm text-muted-foreground">Click the password to copy it</p>
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card className="overflow-hidden">
+          <div className="border-b bg-muted/50 p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="font-semibold tracking-tight">Generated Password</h3>
+                <p className="text-sm text-muted-foreground">Click the password to copy it</p>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="p-4 space-y-4">
-          <div className="flex gap-2">
-            <Card 
-              className="flex-1 bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer border-primary/20" 
-              onClick={() => handleCopy(password)}
+          
+          <div className="p-4 space-y-4">
+            <motion.div 
+              className="flex gap-2"
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300 }}
             >
-              <CardContent className="p-4">
-                <code className="text-sm md:text-base font-mono break-all select-all">{password}</code>
-              </CardContent>
-            </Card>
-            <div className="flex flex-col gap-2">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={() => handleCopy(password)} 
-                className="shrink-0 hover:bg-muted"
-                title="Copy to clipboard"
+              <Card 
+                className="flex-1 bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer border-primary/20" 
+                onClick={() => handleCopy(password)}
               >
-                {copied ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-                <span className="sr-only">Copy password</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleGenerate} 
-                className="shrink-0 hover:bg-muted"
-                title="Generate new password"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span className="sr-only">Generate new password</span>
-              </Button>
-            </div>
+                <CardContent className="p-4">
+                  <motion.code 
+                    key={password}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-sm md:text-base font-mono break-all select-all"
+                  >
+                    {password}
+                  </motion.code>
+                </CardContent>
+              </Card>
+              <div className="flex flex-col gap-2">
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => handleCopy(password)} 
+                    className="shrink-0 hover:bg-muted"
+                    title="Copy to clipboard"
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={copied ? "check" : "copy"}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </motion.div>
+                    </AnimatePresence>
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={handleGenerate} 
+                    className="shrink-0 hover:bg-muted"
+                    title="Generate new password"
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </motion.div>
+                  </Button>
+                </motion.div>
+              </div>
+            </motion.div>
           </div>
-          {copied && (
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500"></span>
-              Copied to clipboard
-            </p>
-          )}
-        </div>
-      </Card>
-
-      {/* Random Source Card */}
-      <RandomSourceSelector
-        value={options.randomSource}
-        onChange={(source) => {
-          setOptions(prev => ({ ...prev, randomSource: source }))
-          handleGenerate() // Generate new password when source changes
-        }}
-      />
+        </Card>
+      </motion.div>
 
       {/* Password Options */}
       <Card className="overflow-hidden">
@@ -330,15 +425,15 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
               {/* Length */}
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium">Length</Label>
                     <span className="text-sm text-muted-foreground">{options.length} characters</span>
                   </div>
                   <Slider
                     value={[options.length]}
                     onValueChange={([value]) => setOptions(prev => ({ ...prev, length: value }))}
-                    min={8}
-                    max={32}
+                    min={4}
+                    max={96}
                     step={1}
                     className="w-full"
                   />
@@ -518,19 +613,157 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
                     placeholder="Example: W-w-00##"
                     className="font-mono text-base"
                   />
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleGenerate}
-                    className="w-full"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Generate with this recipe
-                  </Button>
                 </div>
               </div>
             </div>
           ) : null}
+          </div>
+      </Card>
+      {/* Random Source Card */}
+      <RandomSourceSelector
+        value={options.randomSource}
+        onChange={(source) => {
+          setOptions(prev => ({ ...prev, randomSource: source }))
+        }}
+      />
+      {/* Saved Configurations */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium">Saved Configurations</h4>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={saveCurrentConfig}
+            className="gap-2"
+          >
+            <Star className="h-4 w-4" />
+            Save Current
+          </Button>
+        </div>
+        
+        {savedConfigs.length > 0 ? (
+          <div className="grid gap-2">
+            {savedConfigs.map((config, index) => (
+              <Card key={index} className="p-2 flex items-center justify-between">
+                <span className="text-sm font-medium">{config.name}</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => loadConfig(config)}
+                  >
+                    Load
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => deleteConfig(index)}
+                  >
+                    <StarOff className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No saved configurations yet
+          </p>
+        )}
+      </div>
+      {/* Add export functionality */}
+      <Card className="p-4">
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium">Export Options</h4>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const blob = new Blob([password], { type: 'text/plain' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = 'password.txt'
+                a.click()
+                URL.revokeObjectURL(url)
+                toast({
+                  description: "Password exported to file",
+                })
+              }}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Save as File
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                const data = {
+                  password,
+                  generatedAt: new Date().toISOString(),
+                  options
+                }
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = 'password-config.json'
+                a.click()
+                URL.revokeObjectURL(url)
+                toast({
+                  description: "Configuration exported to JSON",
+                })
+              }}
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Export Config
+            </Button>
+          </div>
+        </div>
+      </Card>
+      {/* Interactive Strength Education */}
+      <Card className="p-4">
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium flex items-center gap-2">
+            <Lightbulb className="h-4 w-4" />
+            Password Strength Tips
+          </h4>
+          <div className="grid gap-3">
+            <motion.div 
+              className="rounded-lg border p-3"
+              whileHover={{ scale: 1.01, backgroundColor: "rgba(var(--primary), 0.05)" }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <h5 className="font-medium mb-1">Length Matters</h5>
+              <p className="text-sm text-muted-foreground">
+                Each additional character exponentially increases the password's strength.
+                Try adding more characters to see the effect.
+              </p>
+            </motion.div>
+            
+            <motion.div 
+              className="rounded-lg border p-3"
+              whileHover={{ scale: 1.01, backgroundColor: "rgba(var(--primary), 0.05)" }}
+            >
+              <h5 className="font-medium mb-1">Mix Character Types</h5>
+              <p className="text-sm text-muted-foreground">
+                Using a combination of uppercase, lowercase, numbers, and symbols makes
+                your password much harder to crack.
+              </p>
+            </motion.div>
+            
+            <motion.div 
+              className="rounded-lg border p-3"
+              whileHover={{ scale: 1.01, backgroundColor: "rgba(var(--primary), 0.05)" }}
+            >
+              <h5 className="font-medium mb-1">Avoid Common Patterns</h5>
+              <p className="text-sm text-muted-foreground">
+                Keyboard patterns (qwerty), number sequences (123), and common substitutions
+                (a→@) are easily guessed by password crackers.
+              </p>
+            </motion.div>
+          </div>
         </div>
       </Card>
     </div>

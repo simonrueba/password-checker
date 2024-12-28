@@ -64,34 +64,49 @@ export default function Home() {
               <CardDescription>Check password strength and generate secure passwords</CardDescription>
             </CardHeader>
             <div className="p-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="w-full grid grid-cols-3 mb-6">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <TabsTrigger value="check">Password Checker</TabsTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>Alt + C</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+              <Tabs defaultValue="check" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="w-full grid grid-cols-3 mb-6 gap-2 bg-transparent">
+                  <TabsTrigger 
+                    value="check" 
+                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="w-full">
+                          Password Checker
+                        </TooltipTrigger>
+                        <TooltipContent>Alt + C</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TabsTrigger>
 
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <TabsTrigger value="generate">Password Generator</TabsTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>Alt + G</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <TabsTrigger 
+                    value="generate"
+                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="w-full">
+                          Password Generator
+                        </TooltipTrigger>
+                        <TooltipContent>Alt + G</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TabsTrigger>
 
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <TabsTrigger value="passphrase">Passphrase Generator</TabsTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>Alt + P</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <TabsTrigger 
+                    value="passphrase"
+                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="w-full">
+                          Passphrase Generator
+                        </TooltipTrigger>
+                        <TooltipContent>Alt + P</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="check" className="mt-6">
@@ -131,14 +146,14 @@ export default function Home() {
             <CardHeader className="border-b bg-muted/50 space-y-3">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
-                <CardTitle>Security Guidelines</CardTitle>
+                <CardTitle>Quick Security Tips</CardTitle>
               </div>
-              <CardDescription>Best practices for strong passwords</CardDescription>
+              <CardDescription>Simple steps to keep your accounts safe</CardDescription>
             </CardHeader>
             <div className="p-6">
               <div className="grid gap-8 md:grid-cols-3">
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">Password Best Practices</h3>
+                  <h3 className="text-lg font-semibold">Make it Strong</h3>
                   <ul className="space-y-2.5 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
@@ -146,25 +161,21 @@ export default function Home() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
-                      <span>Mix uppercase and lowercase</span>
+                      <span>Mix letters, numbers & symbols</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
-                      <span>Include numbers and symbols</span>
+                      <span>Try a memorable phrase instead</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
-                      <span>Avoid personal information</span>
+                      <span>Avoid personal info (birthdays, names)</span>
                     </li>
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">Security Tips</h3>
+                  <h3 className="text-lg font-semibold">Keep it Safe</h3>
                   <ul className="space-y-2.5 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <span className="select-none">•</span>
-                      <span>Never reuse passwords</span>
-                    </li>
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
                       <span>Use a password manager</span>
@@ -175,28 +186,32 @@ export default function Home() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
-                      <span>Change passwords regularly</span>
+                      <span>Use unique passwords everywhere</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="select-none">•</span>
+                      <span>Change if account is compromised</span>
                     </li>
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">Common Mistakes</h3>
+                  <h3 className="text-lg font-semibold">What to Avoid</h3>
                   <ul className="space-y-2.5 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
-                      <span>Using dictionary words</span>
+                      <span>Simple patterns (123, abc, qwerty)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
-                      <span>Sequential characters (123, abc)</span>
+                      <span>Sharing passwords with others</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
-                      <span>Keyboard patterns (qwerty)</span>
+                      <span>Using the same password twice</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
-                      <span>Simple substitutions (@ for a)</span>
+                      <span>Saving passwords in plain text</span>
                     </li>
                   </ul>
                 </div>

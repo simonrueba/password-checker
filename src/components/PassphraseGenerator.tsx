@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -6,9 +6,20 @@ import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Copy, RefreshCw } from 'lucide-react'
 import { Label } from "@/components/ui/label"
+import { toast } from "@/components/ui/use-toast"
+import RandomSourceSelector, { type RandomSource } from './RandomSourceSelector'
 
 interface PassphraseGeneratorProps {
   onSelect?: (passphrase: string) => void
+}
+
+interface PassphraseOptions {
+  wordCount: number
+  separator: string
+  includeNumbers: boolean
+  includeCasing: boolean
+  includeSymbols: boolean
+  randomSource: RandomSource
 }
 
 // Word lists for generating memorable passphrases
@@ -30,17 +41,32 @@ const VERBS = [
   'sparks', 'waves', 'burns', 'calls', 'falls', 'rises', 'spins', 'turns', 'moves', 'plays', 'stays', 'wins'
 ]
 
-function generatePassphrase(options: {
-  wordCount: number,
-  includeCasing: boolean,
-  includeNumbers: boolean,
-  includeSymbols: boolean,
-  separator: string
-}): string {
-  const { wordCount, includeCasing, includeNumbers, includeSymbols, separator } = options
+function generatePassphrase(options: PassphraseOptions): string {
+  const { wordCount, includeCasing, includeNumbers, includeSymbols, separator, randomSource } = options
   
   let words: string[] = []
   const usedWords = new Set<string>() // Prevent word repetition
+  
+  // Helper function to get random item using the specified source
+  const getRandomItem = <T extends any>(array: T[]): T => {
+    let random: number
+    switch (randomSource) {
+      case 'crypto':
+        const cryptoArray = new Uint32Array(1)
+        crypto.getRandomValues(cryptoArray)
+        random = cryptoArray[0] / (0xffffffff + 1)
+        break
+      case 'math':
+        random = Math.random()
+        break
+      default:
+        // Default to crypto for maximum security
+        const defaultArray = new Uint32Array(1)
+        crypto.getRandomValues(defaultArray)
+        random = defaultArray[0] / (0xffffffff + 1)
+    }
+    return array[Math.floor(random * array.length)]
+  }
   
   for (let i = 0; i < wordCount; i++) {
     const pattern = i % 3
@@ -52,13 +78,13 @@ function generatePassphrase(options: {
     do {
       switch (pattern) {
         case 0:
-          word = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
+          word = getRandomItem(ADJECTIVES)
           break
         case 1:
-          word = NOUNS[Math.floor(Math.random() * NOUNS.length)]
+          word = getRandomItem(NOUNS)
           break
         case 2:
-          word = VERBS[Math.floor(Math.random() * VERBS.length)]
+          word = getRandomItem(VERBS)
           break
       }
       attempts++
@@ -71,13 +97,13 @@ function generatePassphrase(options: {
     }
     
     if (includeNumbers && Math.random() > 0.7) {
-      const num = Math.floor(Math.random() * 1000)
+      const num = Math.floor(getRandomItem([...Array(1000).keys()]))
       word += (num < 10 ? '0' : '') + num // Ensure at least 2 digits
     }
     
     if (includeSymbols && Math.random() > 0.7) {
       const symbols = ['!', '@', '#', '$', '%', '&', '*', '?', '+', '=']
-      word += symbols[Math.floor(Math.random() * symbols.length)]
+      word += getRandomItem(symbols)
     }
     
     words.push(word)
@@ -110,16 +136,24 @@ function estimatePassphraseStrength(passphrase: string): {
 }
 
 export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorProps) {
-  const [options, setOptions] = useState({
-    wordCount: 4,
-    includeCasing: true,
+  const [options, setOptions] = useState<PassphraseOptions>({
+    wordCount: 3,
+    separator: '-',
     includeNumbers: true,
+    includeCasing: true,
     includeSymbols: true,
-    separator: '-'
+    randomSource: 'crypto'
   })
 
   const [passphrase, setPassphrase] = useState(() => generatePassphrase(options))
   const [copied, setCopied] = useState(false)
+
+  // Add effect to regenerate passphrase when options change
+  useEffect(() => {
+    const newPassphrase = generatePassphrase(options)
+    setPassphrase(newPassphrase)
+    if (onSelect) onSelect(newPassphrase)
+  }, [options, onSelect])
 
   const handleGenerate = () => {
     const newPassphrase = generatePassphrase(options)
@@ -128,9 +162,12 @@ export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorPro
     if (onSelect) onSelect(newPassphrase)
   }
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(passphrase)
+  const handleCopy = () => {
+    navigator.clipboard.writeText(passphrase)
     setCopied(true)
+    toast({
+      description: "Passphrase copied to clipboard",
+    })
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -153,14 +190,6 @@ export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorPro
             <div className="space-y-1">
               <h3 className="font-semibold tracking-tight">Generated Passphrase</h3>
               <p className="text-sm text-muted-foreground">Click the passphrase to copy it</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="font-mono">
-                {strength.score}%
-              </Badge>
-              <Badge className={getStrengthColor(strength.label)}>
-                {strength.label}
-              </Badge>
             </div>
           </div>
         </div>
@@ -275,6 +304,13 @@ export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorPro
           </div>
         </div>
       </Card>
+
+      <RandomSourceSelector
+        value={options.randomSource}
+        onChange={(source) => {
+          setOptions(prev => ({ ...prev, randomSource: source }))
+        }}
+      />
     </div>
   )
 } 

@@ -8,7 +8,7 @@ export default function Header() {
         <div className="mr-4 flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <span className="font-bold sm:inline-block">
-              Password Checker
+              Password Security Center
             </span>
           </Link>
         </div>
