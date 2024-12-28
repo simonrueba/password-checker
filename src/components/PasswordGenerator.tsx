@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Copy, RefreshCw, AlertTriangle, Check, Star, StarOff, Download, Save, Lightbulb } from 'lucide-react'
+import { Copy, RefreshCw, AlertTriangle, Check, Star, StarOff, Download, Save, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Progress } from "@/components/ui/progress"
@@ -183,11 +183,6 @@ function generatePassword(options: PasswordOptions): string {
   return password
 }
 
-interface SavedConfig {
-  name: string
-  options: PasswordOptions
-}
-
 export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) {
   const { toast } = useToast()
   const [options, setOptions] = useState<PasswordOptions>({
@@ -203,10 +198,7 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
 
   const [password, setPassword] = useState(() => generatePassword(options))
   const [copied, setCopied] = useState(false)
-  const [savedConfigs, setSavedConfigs] = useState<SavedConfig[]>(() => {
-    const saved = localStorage.getItem('savedPasswordConfigs')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [optionsExpanded, setOptionsExpanded] = useState(false)
 
   // Add effect to regenerate password when options change
   useEffect(() => {
@@ -243,46 +235,14 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
     // Ctrl/Cmd + C to copy when focused
     if ((event.ctrlKey || event.metaKey) && event.key === 'c' && document.activeElement?.id === 'password-input') {
       event.preventDefault()
-      handleCopy()
+      handleCopy(password)
     }
-  }, [options, onSelect])
+  }, [options, onSelect, password, handleCopy])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [handleKeyPress])
-
-  // Save configurations to localStorage
-  useEffect(() => {
-    localStorage.setItem('savedPasswordConfigs', JSON.stringify(savedConfigs))
-  }, [savedConfigs])
-
-  const saveCurrentConfig = () => {
-    const name = prompt('Enter a name for this configuration:')
-    if (!name) return
-
-    setSavedConfigs(prev => [...prev, { name, options }])
-    toast({
-      title: "Configuration Saved",
-      description: `Saved as "${name}"`,
-    })
-  }
-
-  const loadConfig = (config: SavedConfig) => {
-    setOptions(config.options)
-    toast({
-      title: "Configuration Loaded",
-      description: `Loaded "${config.name}"`,
-    })
-  }
-
-  const deleteConfig = (index: number) => {
-    setSavedConfigs(prev => prev.filter((_, i) => i !== index))
-    toast({
-      title: "Configuration Deleted",
-      description: "Configuration removed from favorites",
-      })
-  }
 
   return (
     <div className="space-y-6">
@@ -380,244 +340,266 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
       {/* Password Options */}
       <Card className="overflow-hidden">
         <div className="border-b bg-muted/50 p-4">
-          <div className="space-y-1">
-            <h3 className="font-semibold tracking-tight">Password Options</h3>
-            <p className="text-sm text-muted-foreground">Customize your password generation</p>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h3 className="font-semibold tracking-tight">Password Options</h3>
+              <p className="text-sm text-muted-foreground">Customize your password generation</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOptionsExpanded(!optionsExpanded)}
+              className="gap-2"
+            >
+              {optionsExpanded ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  <span>Collapse</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  <span>Expand</span>
+                </>
+              )}
+            </Button>
           </div>
         </div>
         
-        <div className="p-4 space-y-6">
-          {/* Password Type */}
-          <div className="space-y-4">
-            <Label className="text-sm font-medium">Password Type</Label>
-            <RadioGroup
-              value={options.type}
-              onValueChange={(value: 'random' | 'memorable' | 'recipe') => {
-                setOptions(prev => ({ ...prev, type: value }))
-                if (value === 'memorable') {
-                  setOptions(prev => ({ ...prev, length: 16 }))
-                }
-              }}
-              className="grid grid-cols-3 gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="random" id="random" />
-                <Label htmlFor="random" className="text-sm">Random</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="memorable" id="memorable" />
-                <Label htmlFor="memorable" className="text-sm">Memorable</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="recipe" id="recipe" />
-                <Label htmlFor="recipe" className="text-sm">Custom Recipe</Label>
-              </div>
-            </RadioGroup>
-            <p className="text-xs text-muted-foreground">
-              {options.type === 'memorable' 
-                ? "Creates passwords using patterns that are easier to remember but still secure" 
-                : "Generates completely random passwords for maximum security"}
-            </p>
-          </div>
-
-          {options.type === 'random' ? (
-            <>
-              {/* Length */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-          <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Length</Label>
-                    <span className="text-sm text-muted-foreground">{options.length} characters</span>
-                  </div>
-                  <Slider
-                    value={[options.length]}
-                    onValueChange={([value]) => setOptions(prev => ({ ...prev, length: value }))}
-                    min={4}
-                    max={96}
-                    step={1}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-muted-foreground">Longer passwords provide better security</p>
-                </div>
-              </div>
-
-              {/* Character Options */}
-              <div className="space-y-4">
-                <div className="grid gap-3">
-                  <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Uppercase Letters</Label>
-                      <p className="text-xs text-muted-foreground">Include A-Z</p>
-                    </div>
-                    <Switch
-                      checked={options.includeUppercase}
-                      onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeUppercase: checked }))}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Lowercase Letters</Label>
-                      <p className="text-xs text-muted-foreground">Include a-z</p>
-                    </div>
-                    <Switch
-                      checked={options.includeLowercase}
-                      onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeLowercase: checked }))}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Numbers</Label>
-                      <p className="text-xs text-muted-foreground">Include 0-9</p>
-                    </div>
-                    <Switch
-                      checked={options.includeNumbers}
-                      onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeNumbers: checked }))}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Symbols</Label>
-                      <p className="text-xs text-muted-foreground">Include !@#$%^&* and more</p>
-                    </div>
-                    <Switch
-                      checked={options.includeSymbols}
-                      onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeSymbols: checked }))}
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : options.type === 'memorable' ? (
-            <div className="rounded-lg border p-4">
-              <h4 className="font-medium mb-2">Memorable Password Pattern</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Creates passwords following this pattern:
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary"></span>
-                  <span>Capitalized adjective (e.g., Happy, Brave)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary"></span>
-                  <span>Capitalized noun (e.g., Tiger, Cloud)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary"></span>
-                  <span>Three numbers (e.g., 123, 456)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary"></span>
-                  <span>Three symbols (e.g., !@#, $%^)</span>
-                </li>
-              </ul>
-              <p className="text-xs text-muted-foreground mt-3">
-                Example: BraveEagle123!@#
-              </p>
-            </div>
-          ) : options.type === 'recipe' ? (
+        {optionsExpanded && (
+          <div className="p-4 space-y-6">
+            {/* Password Type */}
             <div className="space-y-4">
-              <div className="rounded-lg border p-4">
-                <h4 className="font-medium mb-2">Password Recipe</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Create your own password pattern using these tokens:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="space-y-3">
-                    <h5 className="text-sm font-medium">Basic Characters</h5>
-                    <div className="grid gap-2">
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">A</code>
-                        <span className="text-sm">Uppercase letter (A-Z)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">a</code>
-                        <span className="text-sm">Lowercase letter (a-z)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">0</code>
-                        <span className="text-sm">Number (0-9)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">#</code>
-                        <span className="text-sm">Symbol (!@#$%^&* etc)</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <h5 className="text-sm font-medium">Words & Names</h5>
-                    <div className="grid gap-2">
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">W</code>
-                        <span className="text-sm">Random word in CAPS</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">w</code>
-                        <span className="text-sm">Random word in lowercase</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">C</code>
-                        <span className="text-sm">Color name in CAPS</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">c</code>
-                        <span className="text-sm">Color name in lowercase</span>
-                      </div>
-                    </div>
-                  </div>
+              <Label className="text-sm font-medium">Password Type</Label>
+              <RadioGroup
+                value={options.type}
+                onValueChange={(value: 'random' | 'memorable' | 'recipe') => {
+                  setOptions(prev => ({ ...prev, type: value }))
+                  if (value === 'memorable') {
+                    setOptions(prev => ({ ...prev, length: 16 }))
+                  }
+                }}
+                className="grid grid-cols-3 gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="random" id="random" />
+                  <Label htmlFor="random" className="text-sm">Random</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="memorable" id="memorable" />
+                  <Label htmlFor="memorable" className="text-sm">Memorable</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="recipe" id="recipe" />
+                  <Label htmlFor="recipe" className="text-sm">Custom Recipe</Label>
+                </div>
+              </RadioGroup>
+              <p className="text-xs text-muted-foreground">
+                {options.type === 'memorable' 
+                  ? "Creates passwords using patterns that are easier to remember but still secure" 
+                  : "Generates completely random passwords for maximum security"}
+              </p>
+            </div>
 
-                  <div className="space-y-3">
-                    <h5 className="text-sm font-medium">Dates & Numbers</h5>
-                    <div className="grid gap-2">
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">Y</code>
-                        <span className="text-sm">Random year (2024-2028)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">M</code>
-                        <span className="text-sm">Random month (01-12)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">D</code>
-                        <span className="text-sm">Random day (01-30)</span>
-                      </div>
+            {options.type === 'random' ? (
+              <>
+                {/* Length */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Length</Label>
+                      <span className="text-sm text-muted-foreground">{options.length} characters</span>
                     </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h5 className="text-sm font-medium">Example Recipes</h5>
-                    <div className="grid gap-2 text-sm text-muted-foreground">
-                      <p><code className="bg-muted px-1.5 rounded">W-w-00##</code> → BRAVE-tiger-45!@</p>
-                      <p><code className="bg-muted px-1.5 rounded">C#w#Y</code> → BLUE#wave#2025</p>
-                      <p><code className="bg-muted px-1.5 rounded">AAAA-0000</code> → SWIFT-1234</p>
-                      <p><code className="bg-muted px-1.5 rounded">D/M/Y</code> → 15/06/2024</p>
-                    </div>
+                    <Slider
+                      value={[options.length]}
+                      onValueChange={([value]) => setOptions(prev => ({ ...prev, length: value }))}
+                      min={4}
+                      max={96}
+                      step={1}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-muted-foreground">Longer passwords provide better security</p>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="recipe" className="text-sm font-medium">Your Recipe</Label>
-                    <div className="text-xs text-muted-foreground">
-                      (Try the examples above or create your own)
+                {/* Character Options */}
+                <div className="space-y-4">
+                  <div className="grid gap-3">
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Uppercase Letters</Label>
+                        <p className="text-xs text-muted-foreground">Include A-Z</p>
+                      </div>
+                      <Switch
+                        checked={options.includeUppercase}
+                        onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeUppercase: checked }))}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Lowercase Letters</Label>
+                        <p className="text-xs text-muted-foreground">Include a-z</p>
+                      </div>
+                      <Switch
+                        checked={options.includeLowercase}
+                        onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeLowercase: checked }))}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Numbers</Label>
+                        <p className="text-xs text-muted-foreground">Include 0-9</p>
+                      </div>
+                      <Switch
+                        checked={options.includeNumbers}
+                        onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeNumbers: checked }))}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Symbols</Label>
+                        <p className="text-xs text-muted-foreground">Include !@#$%^&* and more</p>
+                      </div>
+                      <Switch
+                        checked={options.includeSymbols}
+                        onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeSymbols: checked }))}
+                      />
                     </div>
                   </div>
-                  <Input
-                    id="recipe"
-                    value={options.recipe}
-                    onChange={(e) => setOptions(prev => ({ ...prev, recipe: e.target.value }))}
-                    placeholder="Example: W-w-00##"
-                    className="font-mono text-base"
-                  />
+                </div>
+              </>
+            ) : options.type === 'memorable' ? (
+              <div className="rounded-lg border p-4">
+                <h4 className="font-medium mb-2">Memorable Password Pattern</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Creates passwords following this pattern:
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                    <span>Capitalized adjective (e.g., Happy, Brave)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                    <span>Capitalized noun (e.g., Tiger, Cloud)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                    <span>Three numbers (e.g., 123, 456)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                    <span>Three symbols (e.g., !@#, $%^)</span>
+                  </li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Example: BraveEagle123!@#
+                </p>
+              </div>
+            ) : options.type === 'recipe' ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border p-4">
+                  <h4 className="font-medium mb-2">Password Recipe</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Create your own password pattern using these tokens:
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-medium">Basic Characters</h5>
+                      <div className="grid gap-2">
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">A</code>
+                          <span className="text-sm">Uppercase letter (A-Z)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">a</code>
+                          <span className="text-sm">Lowercase letter (a-z)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">0</code>
+                          <span className="text-sm">Number (0-9)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">#</code>
+                          <span className="text-sm">Symbol (!@#$%^&* etc)</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-medium">Words & Names</h5>
+                      <div className="grid gap-2">
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">W</code>
+                          <span className="text-sm">Random word in CAPS</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">w</code>
+                          <span className="text-sm">Random word in lowercase</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">C</code>
+                          <span className="text-sm">Color name in CAPS</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">c</code>
+                          <span className="text-sm">Color name in lowercase</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-medium">Dates & Numbers</h5>
+                      <div className="grid gap-2">
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">Y</code>
+                          <span className="text-sm">Random year (2024-2028)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">M</code>
+                          <span className="text-sm">Random month (01-12)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-muted px-2 py-0.5 rounded min-w-[2rem] text-center">D</code>
+                          <span className="text-sm">Random day (01-30)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-medium">Example Recipes</h5>
+                      <div className="grid gap-2 text-sm text-muted-foreground">
+                        <p><code className="bg-muted px-1.5 rounded">W-w-00##</code> → BRAVE-tiger-45!@</p>
+                        <p><code className="bg-muted px-1.5 rounded">C#w#Y</code> → BLUE#wave#2025</p>
+                        <p><code className="bg-muted px-1.5 rounded">AAAA-0000</code> → SWIFT-1234</p>
+                        <p><code className="bg-muted px-1.5 rounded">D/M/Y</code> → 15/06/2024</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="recipe" className="text-sm font-medium">Your Recipe</Label>
+                      <div className="text-xs text-muted-foreground">
+                        (Try the examples above or create your own)
+                      </div>
+                    </div>
+                    <Input
+                      id="recipe"
+                      value={options.recipe}
+                      onChange={(e) => setOptions(prev => ({ ...prev, recipe: e.target.value }))}
+                      placeholder="Example: W-w-00##"
+                      className="font-mono text-base"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
           </div>
+        )}
       </Card>
       {/* Random Source Card */}
       <RandomSourceSelector
@@ -626,146 +608,6 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
           setOptions(prev => ({ ...prev, randomSource: source }))
         }}
       />
-      {/* Saved Configurations */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium">Saved Configurations</h4>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={saveCurrentConfig}
-            className="gap-2"
-          >
-            <Star className="h-4 w-4" />
-            Save Current
-          </Button>
-        </div>
-        
-        {savedConfigs.length > 0 ? (
-          <div className="grid gap-2">
-            {savedConfigs.map((config, index) => (
-              <Card key={index} className="p-2 flex items-center justify-between">
-                <span className="text-sm font-medium">{config.name}</span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => loadConfig(config)}
-                  >
-                    Load
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => deleteConfig(index)}
-                  >
-                    <StarOff className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No saved configurations yet
-          </p>
-        )}
-      </div>
-      {/* Add export functionality */}
-      <Card className="p-4">
-        <div className="space-y-4">
-          <h4 className="text-sm font-medium">Export Options</h4>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                const blob = new Blob([password], { type: 'text/plain' })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url
-                a.download = 'password.txt'
-                a.click()
-                URL.revokeObjectURL(url)
-                toast({
-                  description: "Password exported to file",
-                })
-              }}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Save as File
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                const data = {
-                  password,
-                  generatedAt: new Date().toISOString(),
-                  options
-                }
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url
-                a.download = 'password-config.json'
-                a.click()
-                URL.revokeObjectURL(url)
-                toast({
-                  description: "Configuration exported to JSON",
-                })
-              }}
-              className="gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Export Config
-            </Button>
-          </div>
-        </div>
-      </Card>
-      {/* Interactive Strength Education */}
-      <Card className="p-4">
-        <div className="space-y-4">
-          <h4 className="text-sm font-medium flex items-center gap-2">
-            <Lightbulb className="h-4 w-4" />
-            Password Strength Tips
-          </h4>
-          <div className="grid gap-3">
-            <motion.div 
-              className="rounded-lg border p-3"
-              whileHover={{ scale: 1.01, backgroundColor: "rgba(var(--primary), 0.05)" }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <h5 className="font-medium mb-1">Length Matters</h5>
-              <p className="text-sm text-muted-foreground">
-                Each additional character exponentially increases the password's strength.
-                Try adding more characters to see the effect.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="rounded-lg border p-3"
-              whileHover={{ scale: 1.01, backgroundColor: "rgba(var(--primary), 0.05)" }}
-            >
-              <h5 className="font-medium mb-1">Mix Character Types</h5>
-              <p className="text-sm text-muted-foreground">
-                Using a combination of uppercase, lowercase, numbers, and symbols makes
-                your password much harder to crack.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="rounded-lg border p-3"
-              whileHover={{ scale: 1.01, backgroundColor: "rgba(var(--primary), 0.05)" }}
-            >
-              <h5 className="font-medium mb-1">Avoid Common Patterns</h5>
-              <p className="text-sm text-muted-foreground">
-                Keyboard patterns (qwerty), number sequences (123), and common substitutions
-                (a→@) are easily guessed by password crackers.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </Card>
     </div>
   )
 }

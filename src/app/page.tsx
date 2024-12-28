@@ -46,29 +46,29 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-grow container mx-auto px-8 lg:px-16 py-12">
-        <div className="max-w-[1000px] mx-auto space-y-8">
+      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+        <div className="max-w-[1000px] mx-auto space-y-6 sm:space-y-8">
           {/* Page Title */}
           <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold tracking-tight">Password Security Center</h1>
-            <p className="text-muted-foreground">Analyze, generate, and strengthen your passwords</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Password Security Center</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Analyze, generate, and strengthen your passwords</p>
           </div>
 
           {/* Password Tools */}
           <Card className="shadow-sm">
-            <CardHeader className="border-b bg-muted/50 space-y-3">
+            <CardHeader className="border-b bg-muted/50 space-y-2 sm:space-y-3 px-4 sm:px-6">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <CardTitle>Password Security</CardTitle>
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <CardTitle className="text-lg sm:text-xl">Password Security</CardTitle>
               </div>
-              <CardDescription>Check password strength and generate secure passwords</CardDescription>
+              <CardDescription className="text-sm">Check password strength and generate secure passwords</CardDescription>
             </CardHeader>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <Tabs defaultValue="check" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="w-full grid grid-cols-3 mb-6 gap-2 bg-transparent">
+                <TabsList className="w-full grid grid-cols-3 mb-4 sm:mb-6 gap-1 sm:gap-2 bg-transparent">
                   <TabsTrigger 
                     value="check" 
-                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-2 py-2 sm:px-4 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-normal h-auto min-h-[40px] sm:min-h-[44px] text-center"
                   >
                     <TooltipProvider>
                       <Tooltip>
@@ -82,7 +82,7 @@ export default function Home() {
 
                   <TabsTrigger 
                     value="generate"
-                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-2 py-2 sm:px-4 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-normal h-auto min-h-[40px] sm:min-h-[44px] text-center"
                   >
                     <TooltipProvider>
                       <Tooltip>
@@ -96,7 +96,7 @@ export default function Home() {
 
                   <TabsTrigger 
                     value="passphrase"
-                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+                    className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-2 py-2 sm:px-4 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-normal h-auto min-h-[40px] sm:min-h-[44px] text-center"
                   >
                     <TooltipProvider>
                       <Tooltip>
@@ -108,19 +108,19 @@ export default function Home() {
                     </TooltipProvider>
                   </TabsTrigger>
                 </TabsList>
-                
-                <TabsContent value="check" className="mt-6">
+
+                <TabsContent value="check" className="mt-4 sm:mt-6">
                   <PasswordChecker 
                     password={password} 
                     setPassword={setPassword}
                   />
                 </TabsContent>
 
-                <TabsContent value="generate" className="mt-6">
+                <TabsContent value="generate" className="mt-4 sm:mt-6">
                   <PasswordGenerator onSelect={setPassword} />
                 </TabsContent>
 
-                <TabsContent value="passphrase" className="mt-6">
+                <TabsContent value="passphrase" className="mt-4 sm:mt-6">
                   <PassphraseGenerator onSelect={setPassword} />
                 </TabsContent>
               </Tabs>
@@ -129,32 +129,32 @@ export default function Home() {
 
           {/* Security Analysis */}
           <Card className="shadow-sm">
-            <CardHeader className="border-b bg-muted/50 space-y-3">
+            <CardHeader className="border-b bg-muted/50 space-y-2 sm:space-y-3 px-4 sm:px-6">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <CardTitle>Security Analysis</CardTitle>
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <CardTitle className="text-lg sm:text-xl">Security Analysis</CardTitle>
               </div>
-              <CardDescription>Advanced password strength assessment</CardDescription>
+              <CardDescription className="text-sm">Advanced password strength assessment</CardDescription>
             </CardHeader>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <SecurityAnalysis password={password} />
             </div>
           </Card>
 
           {/* Tips Section */}
           <Card className="shadow-sm">
-            <CardHeader className="border-b bg-muted/50 space-y-3">
+            <CardHeader className="border-b bg-muted/50 space-y-2 sm:space-y-3 px-4 sm:px-6">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <CardTitle>Quick Security Tips</CardTitle>
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <CardTitle className="text-lg sm:text-xl">Quick Security Tips</CardTitle>
               </div>
-              <CardDescription>Simple steps to keep your accounts safe</CardDescription>
+              <CardDescription className="text-sm">Simple steps to keep your accounts safe</CardDescription>
             </CardHeader>
-            <div className="p-6">
-              <div className="grid gap-8 md:grid-cols-3">
+            <div className="p-4 sm:p-6">
+              <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">Make it Strong</h3>
-                  <ul className="space-y-2.5 text-sm text-muted-foreground">
+                  <h3 className="text-base sm:text-lg font-semibold">Make it Strong</h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
                       <span>Use at least 12 characters</span>
@@ -174,8 +174,8 @@ export default function Home() {
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">Keep it Safe</h3>
-                  <ul className="space-y-2.5 text-sm text-muted-foreground">
+                  <h3 className="text-base sm:text-lg font-semibold">Keep it Safe</h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
                       <span>Use a password manager</span>
@@ -195,8 +195,8 @@ export default function Home() {
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">What to Avoid</h3>
-                  <ul className="space-y-2.5 text-sm text-muted-foreground">
+                  <h3 className="text-base sm:text-lg font-semibold">What to Avoid</h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="select-none">•</span>
                       <span>Simple patterns (123, abc, qwerty)</span>
