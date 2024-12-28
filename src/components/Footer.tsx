@@ -27,7 +27,7 @@ export default function Footer() {
             </div>
 
             <a
-              href="https://github.com/yourusername/password-checker"
+              href="https://github.com/simonrueba/password-checker"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground hover:text-primary"
