@@ -100,6 +100,7 @@ export default function Home() {
 
           {/* Tips - wider, outside the narrow column */}
           <div className="max-w-3xl mx-auto mt-20 pt-12 border-t">
+            <h2 className="sr-only">Password Tips</h2>
             <div className="grid gap-8 sm:grid-cols-3 text-center sm:text-left">
               <div>
                 <h3 className="font-medium mb-3">Strong passwords</h3>
