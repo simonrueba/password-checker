@@ -383,33 +383,27 @@ export default function SecurityAnalysis({ password }: SecurityAnalysisProps) {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-3 mb-6 gap-2 bg-transparent">
-              <TabsTrigger 
-                value="factors" 
-                className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+            <TabsList className="w-full h-auto grid grid-cols-3 mb-6 gap-1 sm:gap-2 bg-muted/50 p-1">
+              <TabsTrigger
+                value="factors"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-2 sm:px-4 py-2 sm:py-2.5 rounded-md font-medium transition-all"
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  <span>Analysis</span>
-                </div>
+                <Shield className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Analysis</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="calculation" 
-                className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+              <TabsTrigger
+                value="calculation"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-2 sm:px-4 py-2 sm:py-2.5 rounded-md font-medium transition-all"
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  <span>Calculation</span>
-                </div>
+                <Hash className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Calculation</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="details" 
-                className="bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-4 py-3 rounded-lg font-medium transition-all"
+              <TabsTrigger
+                value="details"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-2 sm:px-4 py-2 sm:py-2.5 rounded-md font-medium transition-all"
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Braces className="h-4 w-4" />
-                  <span>Details</span>
-                </div>
+                <Braces className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Details</span>
               </TabsTrigger>
             </TabsList>
 
