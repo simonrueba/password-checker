@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
-import { Copy, RefreshCw } from 'lucide-react'
+import { Copy, RefreshCw, Check } from 'lucide-react'
 import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import RandomSourceSelector, { type RandomSource } from './RandomSourceSelector'
@@ -21,117 +20,85 @@ interface PassphraseOptions {
   randomSource: RandomSource
 }
 
-// Word lists for generating memorable passphrases
 const ADJECTIVES = [
   'happy', 'brave', 'bright', 'calm', 'clever', 'eager', 'fair', 'gentle', 'kind', 'lively', 'proud', 'wise',
-  'swift', 'bold', 'quick', 'sharp', 'strong', 'warm', 'wild', 'young', 'free', 'pure', 'rich', 'safe',
-  'deep', 'dark', 'light', 'soft', 'loud', 'quiet', 'sweet', 'tall', 'tiny', 'vast', 'warm', 'cool'
+  'swift', 'bold', 'quick', 'sharp', 'strong', 'warm', 'wild', 'young', 'free', 'pure', 'rich', 'safe'
 ]
 
 const NOUNS = [
   'tiger', 'river', 'mountain', 'forest', 'ocean', 'desert', 'island', 'garden', 'castle', 'valley', 'eagle', 'dragon',
-  'crystal', 'diamond', 'emerald', 'falcon', 'harbor', 'jungle', 'knight', 'lotus', 'meteor', 'nebula', 'oasis', 'pearl',
-  'phoenix', 'rainbow', 'shadow', 'thunder', 'unicorn', 'volcano', 'warrior', 'wizard', 'zenith', 'horizon', 'storm', 'star'
+  'crystal', 'diamond', 'emerald', 'falcon', 'harbor', 'jungle', 'knight', 'lotus', 'meteor', 'nebula', 'oasis', 'pearl'
 ]
 
 const VERBS = [
   'jumps', 'flows', 'glows', 'flies', 'grows', 'leads', 'runs', 'sings', 'walks', 'swims', 'dances', 'shines',
-  'soars', 'races', 'leaps', 'rides', 'glides', 'floats', 'climbs', 'dives', 'dreams', 'guards', 'rules', 'seeks',
-  'sparks', 'waves', 'burns', 'calls', 'falls', 'rises', 'spins', 'turns', 'moves', 'plays', 'stays', 'wins'
+  'soars', 'races', 'leaps', 'rides', 'glides', 'floats', 'climbs', 'dives', 'dreams', 'guards', 'rules', 'seeks'
 ]
 
 function generatePassphrase(options: PassphraseOptions): string {
   const { wordCount, includeCasing, includeNumbers, includeSymbols, separator, randomSource } = options
-  
-  const words: string[] = []
-  const usedWords = new Set<string>() // Prevent word repetition
 
-  // Helper function to get random item using the specified source
   const getRandomItem = <T,>(array: T[]): T => {
-    let random: number
-    switch (randomSource) {
-      case 'crypto':
-        const cryptoArray = new Uint32Array(1)
-        crypto.getRandomValues(cryptoArray)
-        random = cryptoArray[0] / (0xffffffff + 1)
-        break
-      case 'math':
-        random = Math.random()
-        break
-      default:
-        // Default to crypto for maximum security
-        const defaultArray = new Uint32Array(1)
-        crypto.getRandomValues(defaultArray)
-        random = defaultArray[0] / (0xffffffff + 1)
+    if (randomSource === 'math') {
+      return array[Math.floor(Math.random() * array.length)]
     }
-    return array[Math.floor(random * array.length)]
+    const cryptoArray = new Uint32Array(1)
+    crypto.getRandomValues(cryptoArray)
+    return array[Math.floor((cryptoArray[0] / (0xffffffff + 1)) * array.length)]
   }
-  
+
+  const words: string[] = []
+  const usedWords = new Set<string>()
+
   for (let i = 0; i < wordCount; i++) {
     const pattern = i % 3
     let word = ''
-    let attempts = 0
-    const maxAttempts = 10
-    
-    // Try to get a unique word
-    do {
-      switch (pattern) {
-        case 0:
-          word = getRandomItem(ADJECTIVES)
-          break
-        case 1:
-          word = getRandomItem(NOUNS)
-          break
-        case 2:
-          word = getRandomItem(VERBS)
-          break
-      }
-      attempts++
-    } while (usedWords.has(word.toLowerCase()) && attempts < maxAttempts)
-    
-    usedWords.add(word.toLowerCase())
-    
-    // Use crypto random for casing decision
+
+    switch (pattern) {
+      case 0: word = getRandomItem(ADJECTIVES); break
+      case 1: word = getRandomItem(NOUNS); break
+      case 2: word = getRandomItem(VERBS); break
+    }
+
+    if (usedWords.has(word)) {
+      word = getRandomItem([...ADJECTIVES, ...NOUNS, ...VERBS].filter(w => !usedWords.has(w)))
+    }
+    usedWords.add(word)
+
     const cryptoArray = new Uint32Array(3)
     crypto.getRandomValues(cryptoArray)
-    const casingRandom = cryptoArray[0] / (0xffffffff + 1)
-    const numbersRandom = cryptoArray[1] / (0xffffffff + 1)
-    const symbolsRandom = cryptoArray[2] / (0xffffffff + 1)
 
-    if (includeCasing && (casingRandom > 0.5 || pattern === 1)) { // Always capitalize nouns
+    if (includeCasing && (cryptoArray[0] / (0xffffffff + 1) > 0.5 || pattern === 1)) {
       word = word.charAt(0).toUpperCase() + word.slice(1)
     }
 
-    if (includeNumbers && numbersRandom > 0.7) {
-      const num = Math.floor(getRandomItem([...Array(1000).keys()]))
-      word += (num < 10 ? '0' : '') + num // Ensure at least 2 digits
+    if (includeNumbers && cryptoArray[1] / (0xffffffff + 1) > 0.7) {
+      word += Math.floor((cryptoArray[1] / (0xffffffff + 1)) * 100)
     }
 
-    if (includeSymbols && symbolsRandom > 0.7) {
-      const symbols = ['!', '@', '#', '$', '%', '&', '*', '?', '+', '=']
-      word += getRandomItem(symbols)
+    if (includeSymbols && cryptoArray[2] / (0xffffffff + 1) > 0.7) {
+      word += getRandomItem(['!', '@', '#', '$', '%', '&', '*'])
     }
-    
+
     words.push(word)
   }
-  
+
   return words.join(separator)
 }
 
 export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorProps) {
   const [options, setOptions] = useState<PassphraseOptions>({
-    wordCount: 3,
+    wordCount: 4,
     separator: '-',
-    includeNumbers: true,
+    includeNumbers: false,
     includeCasing: true,
-    includeSymbols: true,
+    includeSymbols: false,
     randomSource: 'crypto'
   })
 
   const [passphrase, setPassphrase] = useState(() => generatePassphrase(options))
   const [copied, setCopied] = useState(false)
 
-  // Add effect to regenerate passphrase when options change
   useEffect(() => {
     const newPassphrase = generatePassphrase(options)
     setPassphrase(newPassphrase)
@@ -148,142 +115,73 @@ export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorPro
   const handleCopy = () => {
     navigator.clipboard.writeText(passphrase)
     setCopied(true)
-    toast({
-      description: "Passphrase copied to clipboard",
-    })
+    toast({ description: "Passphrase copied to clipboard" })
     setTimeout(() => setCopied(false), 2000)
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Generated Passphrase */}
-      <Card className="overflow-hidden">
-        <div className="border-b bg-muted/50 p-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h3 className="font-semibold tracking-tight">Generated Passphrase</h3>
-              <p className="text-sm text-muted-foreground">Click the passphrase to copy it</p>
-            </div>
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          <button
+            onClick={handleCopy}
+            className="flex-1 text-left p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors font-mono text-sm break-all"
+          >
+            {passphrase}
+          </button>
+          <div className="flex flex-col gap-2">
+            <Button variant="outline" size="icon" onClick={handleCopy}>
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleGenerate}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-        
-        <div className="p-4 space-y-4">
-          <div className="flex gap-2">
-            <Card 
-              className="flex-1 bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer border-primary/20" 
-              onClick={handleCopy}
-            >
-              <CardContent className="p-4">
-                <code className="text-sm md:text-base font-mono break-all select-all">{passphrase}</code>
-              </CardContent>
-            </Card>
-            <div className="flex flex-col gap-2">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleCopy} 
-                className="shrink-0 hover:bg-muted"
-                title="Copy to clipboard"
-              >
-                <Copy className="h-4 w-4" />
-                <span className="sr-only">Copy passphrase</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleGenerate} 
-                className="shrink-0 hover:bg-muted"
-                title="Generate new passphrase"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span className="sr-only">Generate new passphrase</span>
-              </Button>
-            </div>
-          </div>
-          {copied && (
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500"></span>
-              Copied to clipboard
-            </p>
-          )}
+        <p className="text-xs text-muted-foreground">Click passphrase to copy</p>
+      </div>
+
+      {/* Word Count */}
+      <div className="space-y-3">
+        <div className="flex justify-between">
+          <Label className="text-sm font-medium">Words</Label>
+          <span className="text-sm text-muted-foreground">{options.wordCount}</span>
         </div>
-      </Card>
+        <Slider
+          value={[options.wordCount]}
+          onValueChange={([value]) => setOptions(prev => ({ ...prev, wordCount: value }))}
+          min={3}
+          max={8}
+          step={1}
+        />
+      </div>
 
       {/* Options */}
-      <Card className="overflow-hidden">
-        <div className="border-b bg-muted/50 p-4">
-          <div className="space-y-1">
-            <h3 className="font-semibold tracking-tight">Passphrase Options</h3>
-            <p className="text-sm text-muted-foreground">Customize your passphrase generation</p>
-          </div>
-        </div>
-        
-        <div className="p-4 space-y-6">
-          {/* Word Count */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Word Count</Label>
-                <span className="text-sm text-muted-foreground">{options.wordCount} words</span>
-              </div>
-              <Slider
-                value={[options.wordCount]}
-                onValueChange={([value]) => setOptions(prev => ({ ...prev, wordCount: value }))}
-                min={3}
-                max={8}
-                step={1}
-                className="w-full"
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Options</Label>
+        <div className="grid gap-3">
+          {[
+            { key: 'includeCasing', label: 'Capitalize words' },
+            { key: 'includeNumbers', label: 'Add numbers' },
+            { key: 'includeSymbols', label: 'Add symbols' },
+          ].map(({ key, label }) => (
+            <div key={key} className="flex items-center justify-between">
+              <Label className="text-sm font-normal">{label}</Label>
+              <Switch
+                checked={options[key as keyof PassphraseOptions] as boolean}
+                onCheckedChange={(checked) => setOptions(prev => ({ ...prev, [key]: checked }))}
               />
-              <p className="text-xs text-muted-foreground">More words increase security but decrease memorability</p>
             </div>
-          </div>
-
-          {/* Security Options */}
-          <div className="space-y-4">
-            <div className="grid gap-3">
-              <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Capital Letters</Label>
-                  <p className="text-xs text-muted-foreground">Mix uppercase and lowercase letters</p>
-                </div>
-                <Switch
-                  checked={options.includeCasing}
-                  onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeCasing: checked }))}
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Numbers</Label>
-                  <p className="text-xs text-muted-foreground">Add random numbers to words</p>
-                </div>
-                <Switch
-                  checked={options.includeNumbers}
-                  onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeNumbers: checked }))}
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Symbols</Label>
-                  <p className="text-xs text-muted-foreground">Include special characters</p>
-                </div>
-                <Switch
-                  checked={options.includeSymbols}
-                  onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeSymbols: checked }))}
-                />
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
-      </Card>
+      </div>
 
+      {/* Random Source */}
       <RandomSourceSelector
         value={options.randomSource}
-        onChange={(source) => {
-          setOptions(prev => ({ ...prev, randomSource: source }))
-        }}
+        onChange={(source) => setOptions(prev => ({ ...prev, randomSource: source }))}
       />
     </div>
   )
-} 
+}
