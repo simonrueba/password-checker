@@ -112,11 +112,15 @@ export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorPro
     if (onSelect) onSelect(newPassphrase)
   }
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(passphrase)
-    setCopied(true)
-    toast({ description: "Passphrase copied to clipboard" })
-    setTimeout(() => setCopied(false), 2000)
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(passphrase)
+      setCopied(true)
+      toast({ description: "Passphrase copied to clipboard" })
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast({ description: "Failed to copy to clipboard", variant: "destructive" })
+    }
   }
 
   return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { AlertTriangle, Zap, Brain, Lock, Fingerprint } from 'lucide-react'
 import { checkPasswordStrength, StrengthResult } from '../utils/passwordStrength'
+import { checkPasswordBreach } from '../utils/passwordBreach'
 import { Progress } from "@/components/ui/progress"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -85,7 +86,7 @@ export default function AdvancedInsights({ password }: AdvancedInsightsProps) {
       const newStrength = checkPasswordStrength(password)
       const entropyResult = calculateEntropy(password)
       const crackTimes = estimateCrackTime(entropyResult.entropy)
-      
+
       setStrength(newStrength)
       setEntropyDetails({
         ...entropyResult,
@@ -99,8 +100,14 @@ export default function AdvancedInsights({ password }: AdvancedInsightsProps) {
         }
       })
       setKeyboardPatterns(analyzeKeyboardPatterns(password))
-      setBreached(Math.random() < 0.3)
-      setCommonPassword(Math.random() < 0.2)
+
+      // Check for breaches using real HIBP API
+      checkPasswordBreach(password).then(result => {
+        setBreached(result.isBreached)
+      })
+
+      // Check if password is common (based on zxcvbn feedback)
+      setCommonPassword(newStrength.score <= 1 && newStrength.patterns.length > 0)
     }
   }, [password])
 

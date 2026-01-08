@@ -38,7 +38,7 @@ export function checkPasswordStrength(password: string): StrengthResult {
 
   return {
     score: result.score,
-    entropy: result.guesses_log10 * Math.log(2),
+    entropy: result.guesses_log10 * Math.log2(10),
     guessTimeString: result.crack_times_display.offline_slow_hashing_1e4_per_second,
     strengthText: strengthTexts[result.score],
     feedback: result.feedback,

@@ -78,7 +78,7 @@ function calculateEntropy(password: string): {
 
   // Uniqueness bonus
   const uniqueChars = new Set(password).size
-  const uniquenessRatio = uniqueChars / password.length
+  const uniquenessRatio = password.length > 0 ? uniqueChars / password.length : 0
   const uniquenessBonus = uniquenessRatio * 10
 
   // Pattern penalties
@@ -111,7 +111,7 @@ function calculateEntropy(password: string): {
 
   // Calculate bits per character
   const totalEntropy = Math.max(0, baseEntropy + lengthBonus + uniquenessBonus - patternPenalty)
-  const bitsPerChar = totalEntropy / password.length
+  const bitsPerChar = password.length > 0 ? totalEntropy / password.length : 0
 
   return {
     entropy: totalEntropy,
