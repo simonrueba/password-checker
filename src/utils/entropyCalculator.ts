@@ -29,7 +29,7 @@ export function calculateEntropy(password: string): EntropyResult {
   }
 
   // Determine which character sets are used
-  const usedCharsets = Object.entries(CHAR_SETS).filter(([_, charset]) => 
+  const usedCharsets = Object.entries(CHAR_SETS).filter(([, charset]) =>
     [...password].some(char => charset.includes(char))
   ).map(([name]) => name)
 
@@ -38,8 +38,9 @@ export function calculateEntropy(password: string): EntropyResult {
     sum + CHAR_SETS[charset as keyof typeof CHAR_SETS].length, 0)
 
   // Adjust for common patterns and repetitions
+  // Higher uniqueness ratio = better password (more unique chars relative to length)
   const uniqueChars = new Set(password).size
-  const repetitionPenalty = uniqueChars / password.length
+  const uniquenessRatio = uniqueChars / password.length
 
   // Detect sequential patterns
   const hasSequentialPattern = (str: string): boolean => {
@@ -65,7 +66,8 @@ export function calculateEntropy(password: string): EntropyResult {
   )
 
   // Calculate effective password length considering patterns and repetitions
-  const effectiveLength = password.length * repetitionPenalty * patternPenalty
+  // uniquenessRatio rewards passwords with more unique characters
+  const effectiveLength = password.length * uniquenessRatio * patternPenalty
 
   // Calculate the actual entropy
   const bitsPerCharacter = Math.log2(poolSize)

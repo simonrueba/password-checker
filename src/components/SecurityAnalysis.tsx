@@ -429,7 +429,7 @@ export default function SecurityAnalysis({ password }: SecurityAnalysisProps) {
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="text-xs max-w-[200px]">
-                            Shows how different factors contribute to your password's overall strength:
+                            Shows how different factors contribute to your password&apos;s overall strength:
                             base entropy (character variety), length bonus, and uniqueness.
                           </p>
                         </TooltipContent>
@@ -853,15 +853,15 @@ export default function SecurityAnalysis({ password }: SecurityAnalysisProps) {
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Common Word (e.g., "password")</span>
+                    <span className="text-sm text-muted-foreground">Common Word (e.g., &quot;password&quot;)</span>
                     <Progress value={20} className="w-32 h-1.5" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Numbers Only (e.g., "123456")</span>
+                    <span className="text-sm text-muted-foreground">Numbers Only (e.g., &quot;123456&quot;)</span>
                     <Progress value={10} className="w-32 h-1.5" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Word + Numbers (e.g., "password123")</span>
+                    <span className="text-sm text-muted-foreground">Word + Numbers (e.g., &quot;password123&quot;)</span>
                     <Progress value={30} className="w-32 h-1.5" />
                   </div>
                   <div className="flex items-center justify-between">

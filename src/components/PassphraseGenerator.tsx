@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
-import { Badge } from "@/components/ui/badge"
 import { Copy, RefreshCw } from 'lucide-react'
 import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
@@ -44,11 +43,11 @@ const VERBS = [
 function generatePassphrase(options: PassphraseOptions): string {
   const { wordCount, includeCasing, includeNumbers, includeSymbols, separator, randomSource } = options
   
-  let words: string[] = []
+  const words: string[] = []
   const usedWords = new Set<string>() // Prevent word repetition
-  
+
   // Helper function to get random item using the specified source
-  const getRandomItem = <T extends any>(array: T[]): T => {
+  const getRandomItem = <T,>(array: T[]): T => {
     let random: number
     switch (randomSource) {
       case 'crypto':
@@ -92,16 +91,23 @@ function generatePassphrase(options: PassphraseOptions): string {
     
     usedWords.add(word.toLowerCase())
     
-    if (includeCasing && (Math.random() > 0.5 || pattern === 1)) { // Always capitalize nouns
+    // Use crypto random for casing decision
+    const cryptoArray = new Uint32Array(3)
+    crypto.getRandomValues(cryptoArray)
+    const casingRandom = cryptoArray[0] / (0xffffffff + 1)
+    const numbersRandom = cryptoArray[1] / (0xffffffff + 1)
+    const symbolsRandom = cryptoArray[2] / (0xffffffff + 1)
+
+    if (includeCasing && (casingRandom > 0.5 || pattern === 1)) { // Always capitalize nouns
       word = word.charAt(0).toUpperCase() + word.slice(1)
     }
-    
-    if (includeNumbers && Math.random() > 0.7) {
+
+    if (includeNumbers && numbersRandom > 0.7) {
       const num = Math.floor(getRandomItem([...Array(1000).keys()]))
       word += (num < 10 ? '0' : '') + num // Ensure at least 2 digits
     }
-    
-    if (includeSymbols && Math.random() > 0.7) {
+
+    if (includeSymbols && symbolsRandom > 0.7) {
       const symbols = ['!', '@', '#', '$', '%', '&', '*', '?', '+', '=']
       word += getRandomItem(symbols)
     }
@@ -110,29 +116,6 @@ function generatePassphrase(options: PassphraseOptions): string {
   }
   
   return words.join(separator)
-}
-
-function estimatePassphraseStrength(passphrase: string): {
-  score: number
-  label: 'weak' | 'moderate' | 'strong' | 'very-strong'
-} {
-  const length = passphrase.length
-  const words = passphrase.split(/[-_\s]/).length
-  const hasUpperCase = /[A-Z]/.test(passphrase)
-  const hasNumber = /\d/.test(passphrase)
-  const hasSymbol = /[^A-Za-z0-9\s-_]/.test(passphrase)
-  
-  let score = 0
-  score += Math.min(length * 4, 40) // Length up to 40 points
-  score += words * 10 // 10 points per word
-  score += hasUpperCase ? 10 : 0
-  score += hasNumber ? 10 : 0
-  score += hasSymbol ? 10 : 0
-  
-  if (score >= 90) return { score, label: 'very-strong' }
-  if (score >= 70) return { score, label: 'strong' }
-  if (score >= 50) return { score, label: 'moderate' }
-  return { score, label: 'weak' }
 }
 
 export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorProps) {
@@ -169,16 +152,6 @@ export default function PassphraseGenerator({ onSelect }: PassphraseGeneratorPro
       description: "Passphrase copied to clipboard",
     })
     setTimeout(() => setCopied(false), 2000)
-  }
-
-  const strength = estimatePassphraseStrength(passphrase)
-  const getStrengthColor = (label: string) => {
-    switch (label) {
-      case 'very-strong': return 'bg-green-500'
-      case 'strong': return 'bg-blue-500'
-      case 'moderate': return 'bg-yellow-500'
-      default: return 'bg-red-500'
-    }
   }
 
   return (

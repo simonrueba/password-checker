@@ -14,22 +14,26 @@ export default function PasswordChecker({ password, setPassword }: PasswordCheck
 
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden">
-        <div className="p-4">
+      <Card className="overflow-hidden border-border/50 bg-muted/20">
+        <div className="p-5 sm:p-6">
           <div className="flex gap-2">
             <div className="relative flex-1">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                <span className="font-mono text-xs text-primary font-semibold">$</span>
+                <span className="font-mono text-xs text-muted-foreground">INPUT:</span>
+              </div>
               <Input
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter password to check"
+                placeholder="Enter password for analysis..."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pr-10"
+                className="pl-[85px] pr-12 h-12 font-mono text-sm bg-background/50 border-border/50 focus:border-primary/50 transition-colors"
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 hover:bg-muted/50 border border-transparent hover:border-primary/30 transition-all"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (

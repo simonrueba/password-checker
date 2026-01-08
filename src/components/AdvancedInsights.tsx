@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertTriangle, Clock, Hash, BarChart2, Shield, Key, Zap, Brain, Lock, Fingerprint } from 'lucide-react'
+import { AlertTriangle, Zap, Brain, Lock, Fingerprint } from 'lucide-react'
 import { checkPasswordStrength, StrengthResult } from '../utils/passwordStrength'
 import { Progress } from "@/components/ui/progress"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { analyzeKeyboardPatterns } from '../utils/keyboardPatterns'
 import { Badge } from "@/components/ui/badge"
 import { calculateEntropy, estimateCrackTime, formatDuration } from '../utils/entropyCalculator'
+import type { LucideIcon } from 'lucide-react'
 
 interface AdvancedInsightsProps {
   password: string
@@ -24,7 +24,7 @@ interface SecurityMetric {
   category: string;
   score: number;
   description: string;
-  icon: any;
+  icon: LucideIcon;
 }
 
 const chartConfig = {
@@ -46,19 +46,39 @@ const chartConfig = {
   },
 }
 
-function calculateGuessTime(entropy: number): number {
-  // Estimate guesses needed based on entropy
-  const guesses = Math.pow(2, entropy);
-  // Assume 10,000 guesses per second for a baseline
-  return guesses / 10000;
+interface EntropyDetails {
+  entropy: number;
+  bitsPerCharacter: number;
+  effectiveLength: number;
+  usedCharsets: string[];
+  crackTimes: {
+    onlineFast: number;
+    onlineSlow: number;
+    offlineSlow: number;
+    offlineFast: number;
+    quantum: number;
+  };
+  formattedTimes: {
+    onlineFast: string;
+    onlineSlow: string;
+    offlineSlow: string;
+    offlineFast: string;
+    quantum: string;
+  };
+}
+
+interface KeyboardPatternsResult {
+  hasKeyboardPattern: boolean;
+  patterns: string[];
+  patternTypes: Record<string, boolean>;
 }
 
 export default function AdvancedInsights({ password }: AdvancedInsightsProps) {
   const [strength, setStrength] = useState<StrengthResult | null>(null)
-  const [entropyDetails, setEntropyDetails] = useState<any>(null)
+  const [entropyDetails, setEntropyDetails] = useState<EntropyDetails | null>(null)
   const [breached, setBreached] = useState(false)
   const [commonPassword, setCommonPassword] = useState(false)
-  const [keyboardPatterns, setKeyboardPatterns] = useState<any>(null)
+  const [keyboardPatterns, setKeyboardPatterns] = useState<KeyboardPatternsResult | null>(null)
 
   useEffect(() => {
     if (password) {
@@ -358,7 +378,7 @@ export default function AdvancedInsights({ password }: AdvancedInsightsProps) {
                     <div>
                       <p className="font-medium text-destructive">Data Breach Detection</p>
                       <p className="text-sm mt-1">
-                        This password appears in known data breaches. It's strongly recommended to choose a different password.
+                        This password appears in known data breaches. It&apos;s strongly recommended to choose a different password.
                       </p>
                     </div>
                   </li>
@@ -405,17 +425,17 @@ export default function AdvancedInsights({ password }: AdvancedInsightsProps) {
             <CardContent>
               <ul className="grid gap-4 lg:grid-cols-2">
                 {Object.entries(keyboardPatterns.patternTypes)
-                  .filter(([_, value]) => value)
+                  .filter(([, value]) => value)
                   .map(([type], index) => (
                     <li key={index} className="flex gap-3 p-4 rounded-lg border border-warning/50">
                       <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium capitalize">{type} Pattern</p>
                         <p className="text-sm mt-1">
-                          {type === 'horizontal' && 'Sequential keys in the same row detected (e.g., "qwerty")'}
-                          {type === 'diagonal' && 'Diagonal key patterns detected (e.g., "zxc")'}
-                          {type === 'repeated' && 'Repeated characters detected'}
-                          {type === 'sequential' && 'Sequential characters detected (e.g., "abc", "123")'}
+                          {type === 'horizontal' && "Sequential keys in the same row detected (e.g., qwerty)"}
+                          {type === 'diagonal' && "Diagonal key patterns detected (e.g., zxc)"}
+                          {type === 'repeated' && "Repeated characters detected"}
+                          {type === 'sequential' && "Sequential characters detected (e.g., abc, 123)"}
                         </p>
                       </div>
                     </li>

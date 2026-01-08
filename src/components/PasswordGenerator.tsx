@@ -3,12 +3,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
-import { Badge } from "@/components/ui/badge"
-import { Copy, RefreshCw, AlertTriangle, Check, Star, StarOff, Download, Save, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
+import { Copy, RefreshCw, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Progress } from "@/components/ui/progress"
-import { Shield, Key, Hash, Type, Braces } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import RandomSourceSelector, { type RandomSource } from './RandomSourceSelector'
 import { useToast } from "@/components/ui/use-toast"
@@ -65,7 +62,7 @@ function getSystemRandom(): number {
 
 function getBrowserRandom(): number {
   // Use browser-specific sources of randomness
-  let values = new Uint32Array(1)
+  const values = new Uint32Array(1)
   
   // Try different browser-specific random sources
   if (typeof window !== 'undefined') {
@@ -214,14 +211,14 @@ export default function PasswordGenerator({ onSelect }: PasswordGeneratorProps) 
     if (onSelect) onSelect(newPassword)
   }
 
-  const handleCopy = async (text: string) => {
+  const handleCopy = useCallback(async (text: string) => {
     await navigator.clipboard.writeText(text)
     setCopied(true)
     toast({
       description: "Password copied to clipboard",
     })
     setTimeout(() => setCopied(false), 2000)
-  }
+  }, [toast])
 
   // Keyboard shortcuts
   const handleKeyPress = useCallback((event: KeyboardEvent) => {

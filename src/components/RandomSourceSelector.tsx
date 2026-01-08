@@ -83,7 +83,7 @@ export default function RandomSourceSelector({ value, onChange }: RandomSourceSe
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Math.random()</Label>
                 <p className="text-xs text-muted-foreground">
-                  Uses JavaScript's built-in random number generator
+                  Uses JavaScript&apos;s built-in random number generator
                 </p>
               </div>
               <RadioGroupItem value="math" id="math" />
